@@ -42,11 +42,38 @@ class YaguarSpider(scrapy.Spider):
     driver = None
 
     def start_requests(self):
+        self.login()
         url = 'https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/'
         yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
         logger.info(f"Scraping started at {time.strftime('%H:%M:%S')}")
+
+        CLEANING_CAT_LINK = 'refDepto3'
+        cleaning_cat_link = self.driver.find_element(By.ID, CLEANING_CAT_LINK)
+        cleaning_cat_link.click()
+
+        LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto=3&IdCategoria={category_id}\');"]'
+        for category_name, category_id in CLEANING_CATEGORIES:
+            # link_path = LINK_PATH_TEMPLATE.replace('<category_id>', category_id)
+            # category_link = self.driver.find_element(By.XPATH, link_path)
+            wait = WebDriverWait(self.driver, 5)
+            category_link = wait.until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
+            category_link.click()
+
+            time.sleep(1)
+            # for i in ELEMENTS_PER_PAGE:
+            #     wait = WebDriverWait(self.driver, 10)
+            #     code = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/table/tbody/tr[3]/td/table/tbody/tr[1]/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/p')))
+
+            #     print("///////////////////////////")
+            #     # print(code)
+
+        time.sleep(3)
+        self.driver.stop_client()
+        self.driver.close()
+
+    def login(self):
 
         # Use headless option to not open a new browser window
         options = webdriver.ChromeOptions()
@@ -72,27 +99,3 @@ class YaguarSpider(scrapy.Spider):
 
         login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
         login_button.click()
-
-        CLEANING_CAT_LINK = 'refDepto3'
-        cleaning_cat_link = self.driver.find_element(By.ID, CLEANING_CAT_LINK)
-        cleaning_cat_link.click()
-
-        LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto=3&IdCategoria={category_id}\');"]'
-        for category_name, category_id in CLEANING_CATEGORIES:
-            # link_path = LINK_PATH_TEMPLATE.replace('<category_id>', category_id)
-            # category_link = self.driver.find_element(By.XPATH, link_path)
-            wait = WebDriverWait(self.driver, 5)
-            category_link = wait.until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
-            category_link.click()
-
-            time.sleep(1)
-            # for i in ELEMENTS_PER_PAGE:
-            #     wait = WebDriverWait(self.driver, 10)
-            #     code = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/table/tbody/tr[3]/td/table/tbody/tr[1]/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/p')))
-
-            #     print("///////////////////////////")
-            #     # print(code)
-
-        time.sleep(3)
-        self.driver.stop_client()
-        self.driver.close()
