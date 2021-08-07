@@ -8,7 +8,7 @@ __pycache__/
 *$py.class
 
 # Log files
-*.log
+*.log*
 
 # Environment
 .env
