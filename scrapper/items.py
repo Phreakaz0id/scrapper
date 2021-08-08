@@ -3,10 +3,18 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
 
-import scrapy
+from scrapy.item import Item, Field
 
 
-class ScrapperItem(scrapy.Item):
+class ScrapperItem(Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     pass
+
+
+class MaxiconsumoItem(Item):
+    product_name = Field()
+    code = Field()
+    product_url = Field()
+    bundle_price = Field()
+    unit_price = Field()

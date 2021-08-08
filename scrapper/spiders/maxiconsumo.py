@@ -1,5 +1,6 @@
 import scrapy
 import time
+from ..items import MaxiconsumoItem
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
@@ -37,7 +38,9 @@ class MaxiconsumoSpider(scrapy.Spider):
         enter_button.click()
 
     def parse(self, response):
-        urls = self.generate_paged_urls('https://maxiconsumo.com/sucursal_burzaco/limpieza.html?p={p}&product_list_limit=96', 14)
+        # urls = self.generate_paged_urls('https://maxiconsumo.com/sucursal_burzaco/limpieza.html?p={p}&product_list_limit=96', 14)
+
+        urls = ['https://maxiconsumo.com/sucursal_burzaco/limpieza.html?p=1&product_list_limit=96']
 
         for url in urls:
             self.driver.get(url)
@@ -48,10 +51,15 @@ class MaxiconsumoSpider(scrapy.Spider):
             for product in products_list:
                 product_element = product.find_element_by_class_name('product-item-link')
                 product_name = product_element.text
-                # product_href = product_element.get_attribute('href')
+                product_href = product_element.get_attribute('href')
                 prices = self.search_and_extract_product_price(product)
-                print(product_name)
-                print(prices)
+                bundle_price = prices[0]
+                unit_price = prices[1]
+
+                item = self.create_item(product_name, product_href, bundle_price, unit_price)
+                yield item
+
+                
 
         # Terminate Session
         time.sleep(3)
@@ -92,3 +100,12 @@ class MaxiconsumoSpider(scrapy.Spider):
             if label == "Precio unitario":
                 unit_price = price
         return (bundle_price, unit_price)
+
+    def create_item(self, product_name, product_href, bundle_price, unit_price):
+        item = MaxiconsumoItem()
+        item["product_name"] = product_name
+        item["code"] = "falopa"
+        item["product_url"] = product_href
+        item["bundle_price"] = bundle_price
+        item["unit_price"] = unit_price
+        return item
