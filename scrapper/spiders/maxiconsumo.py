@@ -21,8 +21,8 @@ class MaxiconsumoSpider(scrapy.Spider):
 
     def login(self):
         options = webdriver.ChromeOptions()
-        options.add_argument("start-maximized")
-        # options.add_argument("--headless")
+        # options.add_argument("start-maximized")
+        options.add_argument("--headless")
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         self.driver.get(self.login_url)
 
@@ -47,21 +47,11 @@ class MaxiconsumoSpider(scrapy.Spider):
             products_list = self.driver.find_elements_by_class_name('list-item')
             for product in products_list:
                 product_element = product.find_element_by_class_name('product-item-link')
-
                 product_name = product_element.text
                 # product_href = product_element.get_attribute('href')
-                product_prices = product.find_elements_by_class_name('price-box')
-
-                if product_prices != []:
-                    for product_price in product_prices:
-                        label = product_price.find_element_by_class_name('price-label').text
-                        price = product_price.find_element_by_class_name('price').text
-                        self.print_line(product_name, label, price)
-                else:
-                    self.print_line(product_name, "Precio unitario por bulto cerrado", "$0")
-                    self.print_line(product_name, "Precio unitario", "$0")
-            # https://maxiconsumo.com/sucursal_burzaco/catalog/product/view/id/6447/s/prelavado-trenet-oxi-doypack-250-cc-14958/category/246/
-            # https://maxiconsumo.com/sucursal_burzaco/limpieza.html?p=1&product_list_limit=96
+                prices = self.search_and_extract_product_price(product)
+                print(product_name)
+                print(prices)
 
         # Terminate Session
         time.sleep(3)
@@ -78,3 +68,27 @@ class MaxiconsumoSpider(scrapy.Spider):
 
     def print_line(self, product_name, price_label, price):
         print(f"{product_name} - {price_label} - {price}")
+
+    def print_one_price(self, product_name, label, price):
+        bulto = "Precio unitario por bulto cerrado"
+
+        if label == bulto:
+            self.print_line(product_name, label, price)
+            self.print_line(product_name, "Precio unitario", "$0")
+        else:
+            self.print_line(product_name, "Precio unitario por bulto cerrado", "$0")
+            self.print_line(product_name, label, price)
+
+    def search_and_extract_product_price(self, product):
+        product_prices = product.find_elements_by_class_name('price-box')
+        bundle_price = "$0"
+        unit_price = "$0"
+
+        for product_price in product_prices:
+            label = product_price.find_element_by_class_name('price-label').text
+            price = product_price.find_element_by_class_name('price').text
+            if label == "Precio unitario por bulto cerrado":
+                bundle_price = price
+            if label == "Precio unitario":
+                unit_price = price
+        return (bundle_price, unit_price)
