@@ -12,3 +12,6 @@ __pycache__/
 
 # Environment
 .env
+
+# Output files
+*.json
