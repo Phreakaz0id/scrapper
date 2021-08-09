@@ -57,11 +57,27 @@ class YaguarSpider(scrapy.Spider):
         for category_name, category_id in CLEANING_CATEGORIES:
             # link_path = LINK_PATH_TEMPLATE.replace('<category_id>', category_id)
             # category_link = self.driver.find_element(By.XPATH, link_path)
-            wait = WebDriverWait(self.driver, 5)
-            category_link = wait.until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
+            category_link = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
             category_link.click()
 
             time.sleep(1)
+
+            # Search the iframe
+            iframe = WebDriverWait(self.driver, 30).until(EC.presence_of_element_located((By.XPATH, "//*[@id=\"ifrContenido\"]")))
+
+            PRODUCT_ROWS_CONTAINER_XPATH = "/html/body/table/tbody/tr[3]/td/table/tbody"
+
+            # Try to switch to iframe
+            self.driver.switch_to_frame(iframe)
+            # Try to find product rows
+            r = self.driver.find_element_by_xpath(PRODUCT_ROWS_CONTAINER_XPATH)
+
+            print("///////////////")
+            print(r)
+
+            product_rows_container = self.driver.find_element_by_xpath(PRODUCT_ROWS_CONTAINER_XPATH)
+            print(product_rows_container)
+
             # for i in ELEMENTS_PER_PAGE:
             #     wait = WebDriverWait(self.driver, 10)
             #     code = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/table/tbody/tr[3]/td/table/tbody/tr[1]/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/p')))
