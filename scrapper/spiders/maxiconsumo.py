@@ -12,19 +12,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 class MaxiconsumoSpider(scrapy.Spider):
     name = 'maxiconsumo'
     allowed_domains = ['https://maxiconsumo.com/sucursal_burzaco/']
-    start_urls = ['https://maxiconsumo.com/sucursal_burzaco/']
     driver = None
     login_url = 'https://maxiconsumo.com/sucursal_burzaco/customer/account/login/'
 
     def start_requests(self):
         self.login()
-        url = 'https://maxiconsumo.com/sucursal_burzaco/'
+        url = 'http://quotes.toscrape.com/'
         yield scrapy.Request(url=url, callback=self.parse)
 
     def login(self):
         options = webdriver.ChromeOptions()
-        # options.add_argument("start-maximized")
-        options.add_argument("--headless")
+        options.add_argument("start-maximized")
+        # options.add_argument("--headless")
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         self.driver.get(self.login_url)
 
@@ -41,7 +40,6 @@ class MaxiconsumoSpider(scrapy.Spider):
     def parse(self, response):
         urls = self.generate_paged_urls('https://maxiconsumo.com/sucursal_burzaco/limpieza.html?p={p}&product_list_limit=96', 14)
 
-        counter = 1
         for url in urls:
             self.driver.get(url)
             wait = WebDriverWait(self.driver, 5)
@@ -59,7 +57,6 @@ class MaxiconsumoSpider(scrapy.Spider):
 
                 item = self.create_item(product_name, code, product_href, bundle_price, unit_price)
                 yield item
-            counter += 1
 
         # Terminate Session
         time.sleep(3)
@@ -73,19 +70,6 @@ class MaxiconsumoSpider(scrapy.Spider):
             url = base_url.replace("{p}", str(num))
             urls_list.append(url)
         return urls_list
-
-    def print_line(self, product_name, price_label, price):
-        print(f"{product_name} - {price_label} - {price}")
-
-    def print_one_price(self, product_name, label, price):
-        bulto = "Precio unitario por bulto cerrado"
-
-        if label == bulto:
-            self.print_line(product_name, label, price)
-            self.print_line(product_name, "Precio unitario", "$0")
-        else:
-            self.print_line(product_name, "Precio unitario por bulto cerrado", "$0")
-            self.print_line(product_name, label, price)
 
     def search_and_extract_product_price(self, product):
         product_prices = product.find_elements_by_class_name('price-box')
