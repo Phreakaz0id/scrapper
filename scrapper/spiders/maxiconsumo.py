@@ -11,9 +11,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 class MaxiconsumoSpider(scrapy.Spider):
     name = 'maxiconsumo'
+    category = ""
+    max_pages = 0
     allowed_domains = ['https://maxiconsumo.com/sucursal_burzaco/']
     driver = None
     login_url = 'https://maxiconsumo.com/sucursal_burzaco/customer/account/login/'
+
+    def __init__(self, category, max_pages):
+        self.category = category
+        self.max_pages = max_pages
+        super().__init__()
 
     def start_requests(self):
         self.login()
@@ -22,8 +29,7 @@ class MaxiconsumoSpider(scrapy.Spider):
 
     def login(self):
         options = webdriver.ChromeOptions()
-        options.add_argument("start-maximized")
-        # options.add_argument("--headless")
+        options.add_argument("--headless")
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         self.driver.get(self.login_url)
 
@@ -38,7 +44,7 @@ class MaxiconsumoSpider(scrapy.Spider):
         enter_button.click()
 
     def parse(self, response):
-        urls = self.generate_paged_urls('https://maxiconsumo.com/sucursal_burzaco/limpieza.html?p={p}&product_list_limit=96', 14)
+        urls = self.generate_paged_urls('https://maxiconsumo.com/sucursal_burzaco/{category}.html?p={p}&product_list_limit=96', self.category, int(self.max_pages))
 
         for url in urls:
             self.driver.get(url)
@@ -63,11 +69,12 @@ class MaxiconsumoSpider(scrapy.Spider):
         self.driver.stop_client()
         self.driver.close()
 
-    def generate_paged_urls(self, base_url, max_pages_num: int):
+    def generate_paged_urls(self, base_url, category: str, max_pages_num: int):
         urls_list = []
 
         for num in range(1, max_pages_num + 1):
             url = base_url.replace("{p}", str(num))
+            url = url.replace("{category}", category)
             urls_list.append(url)
         return urls_list
 
