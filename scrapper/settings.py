@@ -12,6 +12,14 @@ BOT_NAME = 'scrapper'
 SPIDER_MODULES = ['scrapper.spiders']
 NEWSPIDER_MODULE = 'scrapper.spiders'
 
+FEED_FORMAT = "csv"
+FEED_EXPORT_FIELDS = [
+    "product_name",
+    "code",
+    "product_url",
+    "bundle_price",
+    "unit_price"
+]
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'scrapper (+http://www.yourdomain.com)'
