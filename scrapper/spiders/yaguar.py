@@ -82,16 +82,19 @@ class YaguarSpider(scrapy.Spider):
             products = []
             products = self.search_products_in_page(products)
             max_pages = max_pages - 1
+            print(f"{max_pages} remaining...")
 
             while max_pages != 0:
                 try:
-                    next_page = self.driver.find_element_by_xpath("/html/body/table/tbody/tr[5]/td/form/table[2]/tbody/tr/td/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td/table/tbody/tr/td[2]/div/a/b/span")
+                    next_page = self.driver.find_element_by_xpath("//*[contains(text(),'siguiente')]")
                     next_page.click()
                 except NoSuchElementException:
                     print("No more pages, switching category")
 
                 products = self.search_products_in_page(products)
                 max_pages = max_pages - 1
+
+                print(f"{max_pages} remaining...")
 
             products = list(set(products))
 
@@ -136,7 +139,6 @@ class YaguarSpider(scrapy.Spider):
 
                 products.append((code.text, product_name, price_element.text))
             except NoSuchElementException:
-                print("No such element")
                 pass
 
         return products
