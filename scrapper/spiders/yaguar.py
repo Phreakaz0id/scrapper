@@ -1,7 +1,10 @@
+import re
 import scrapy
 import time
+from ..items import YaguarItem
 from logzero import logger, logfile
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -40,6 +43,14 @@ class YaguarSpider(scrapy.Spider):
     allowed_domains = ['https://shop.yaguar.com.ar/frontendSP/asp/home.asp#']
     start_urls = ['https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/']
     driver = None
+    custom_settings = {
+        'FEED_EXPORT_FIELDS': [
+            "category",
+            "code",
+            "product_name",
+            "price"
+        ]
+    }
 
     def start_requests(self):
         self.login()
@@ -55,26 +66,82 @@ class YaguarSpider(scrapy.Spider):
 
         LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto=3&IdCategoria={category_id}\');"]'
         for category_name, category_id in CLEANING_CATEGORIES:
-            # link_path = LINK_PATH_TEMPLATE.replace('<category_id>', category_id)
-            # category_link = self.driver.find_element(By.XPATH, link_path)
-            wait = WebDriverWait(self.driver, 5)
-            category_link = wait.until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
+            category_link = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
             category_link.click()
 
-            time.sleep(1)
-            # for i in ELEMENTS_PER_PAGE:
-            #     wait = WebDriverWait(self.driver, 10)
-            #     code = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/table/tbody/tr[3]/td/table/tbody/tr[1]/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/p')))
+            time.sleep(2)
 
-            #     print("///////////////////////////")
-            #     # print(code)
+            # Search the iframe
+            iframe = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, "//*[@id=\"ifrContenido\"]")))
+
+            self.driver.switch_to.frame(iframe)
+
+            pages_text = self.driver.find_element_by_class_name('tcceleste').text
+            max_pages = self.get_page_from_pages_text(pages_text)
+
+            products = []
+            products = self.search_products_in_page(products)
+            max_pages = max_pages - 1
+
+            while max_pages != 0:
+                try:
+                    next_page = self.driver.find_element_by_xpath("/html/body/table/tbody/tr[5]/td/form/table[2]/tbody/tr/td/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td/table/tbody/tr/td[2]/div/a/b/span")
+                    next_page.click()
+                except NoSuchElementException:
+                    print("No more pages, switching category")
+
+                products = self.search_products_in_page(products)
+                max_pages = max_pages - 1
+
+            products = list(set(products))
+
+            for product in products:
+                item = self.create_item(category_name, product)
+                yield item
+
+            self.driver.switch_to.default_content()
 
         time.sleep(3)
         self.driver.stop_client()
         self.driver.close()
 
-    def login(self):
+    def create_item(self, category_name, product):
+        code = product[0]
+        product_name = product[1]
+        product_price = product[2]
 
+        item = YaguarItem()
+        item["category"] = category_name
+        item["code"] = code.replace(" ", "")
+        item["product_name"] = product_name
+        item["price"] = product_price
+
+        return item
+
+    def search_products_in_page(self, _products):
+        PRODUCT_ROWS_CONTAINER_XPATH = "/html/body/table/tbody/tr[3]/td/table/tbody"
+        product_rows_container = self.driver.find_element_by_xpath(PRODUCT_ROWS_CONTAINER_XPATH)
+        product_rows = product_rows_container.find_elements_by_tag_name('tr')
+
+        products = _products
+        for product_row in product_rows:
+            try:
+                code = product_row.find_element_by_class_name('Bulto')
+
+                product_name_container = product_row.find_element_by_class_name('SFPRODTITULOB')
+                product_name_link = product_name_container.find_element_by_tag_name('a')
+                product_name = product_name_link.text
+
+                price_element = product_row.find_element_by_class_name('sfPRODPRECIOA')
+
+                products.append((code.text, product_name, price_element.text))
+            except NoSuchElementException:
+                print("No such element")
+                pass
+
+        return products
+
+    def login(self):
         # Use headless option to not open a new browser window
         options = webdriver.ChromeOptions()
         # options.add_argument("--headless")
@@ -99,3 +166,6 @@ class YaguarSpider(scrapy.Spider):
 
         login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
         login_button.click()
+
+    def get_page_from_pages_text(self, pages_text):
+        return int(re.search(r'Página 1 de (.*?) ', pages_text).group(1))
