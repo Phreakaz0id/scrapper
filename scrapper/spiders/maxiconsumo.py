@@ -16,6 +16,15 @@ class MaxiconsumoSpider(scrapy.Spider):
     allowed_domains = ['https://maxiconsumo.com/sucursal_burzaco/']
     driver = None
     login_url = 'https://maxiconsumo.com/sucursal_burzaco/customer/account/login/'
+    custom_settings = {
+        'FEED_EXPORT_FIELDS': [
+            "product_name",
+            "code",
+            "product_url",
+            "bundle_price",
+            "unit_price"
+        ]
+    }
 
     def __init__(self, category, max_pages):
         self.category = category
