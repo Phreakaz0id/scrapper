@@ -10,26 +10,49 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-CLEANING_CATEGORIES = [
-    ('ACCESORIOS DE LIMPIEZA', '9'),
-    ('ADITIVOS PARA LA ROPA', '8'),
-    ('ALCOHOL QUEMAR', '22'),
-    ('APRESTOS', '6'),
-    ('CERAS', '11'),
-    ('DESODORANTES DE AMBIENTE', '29'),
-    ('DESTAPA CAÑERIAS', '30'),
-    ('DETERGENTES Y LAVAVAJILLAS', '3'),
-    ('INSECTICIDAS', '13'),
-    ('JABON PARA LA ROPA', '1'),
-    ('LAVANDINA', '4'),
-    ('LIMPIADORES', '5'),
-    ('LIMPIADORES DE PISOS', '10'),
-    ('LUSTRAMUEBLES', '33'),
-    ('POMADA PARA CALZAD', '18'),
-    ('ROL.COC/SERVILL', '2'),
-    ('SUAVIZANTES', '12'),
-]
+# ---> Categoria de Limpieza
+# CATEGORIES = [
+#     ('ACCESORIOS DE LIMPIEZA', '9'),
+#     ('ADITIVOS PARA LA ROPA', '8'),
+#     ('ALCOHOL QUEMAR', '22'),
+#     ('APRESTOS', '6'),
+#     ('CERAS', '11'),
+#     ('DESODORANTES DE AMBIENTE', '29'),
+#     ('DESTAPA CAÑERIAS', '30'),
+#     ('DETERGENTES Y LAVAVAJILLAS', '3'),
+#     ('INSECTICIDAS', '13'),
+#     ('JABON PARA LA ROPA', '1'),
+#     ('LAVANDINA', '4'),
+#     ('LIMPIADORES', '5'),
+#     ('LIMPIADORES DE PISOS', '10'),
+#     ('LUSTRAMUEBLES', '33'),
+#     ('POMADA PARA CALZAD', '18'),
+#     ('ROL.COC/SERVILL', '2'),
+#     ('SUAVIZANTES', '12'),
+# ]
 
+# ---> Categoria de Perfumeria
+CATEGORIES = [
+    ('CERAS DEPILATORIAS', '34'),
+    ('COLONIAS Y PERFUMES', '10'),
+    ('CREMAS CORPORALES', '12'),
+    ('CUIDADO CAPILAR', '14'),
+    ('CUIDADO DENTAL', '8'),
+    ('DESODORANTES PERSONALES', '11'),
+    ('ESMALTES Y QUITAESMALTES', '29'),
+    ('ESPONJAS DE BAÑO', '46'),
+    ('FILOS PARA AFEITAR', '26'),
+    ('GELES DE BAÑO', '13'),
+    ('JABON TOCADOR', '19'),
+    ('PAÑALES Y TOALLAS HUMEDAS', '5'),
+    ('PAÑUELOS DESCAR', '28'),
+    ('PRODUCTOS FARMACIA', '1'),
+    ('PRODUCTOS PARA BEBES', '6'),
+    ('PROTECCION FEMENINA', '16'),
+    ('TALCOS/POLVOS', '9'),
+    ('TINTURAS', '30'),
+    ('TOALLAS DESMAQUILLANTES', '18')
+]
 
 CODE_X_PATH = '/html/body/table/tbody/tr[3]/td/table/tbody/tr[{row}]/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/p'
 
@@ -60,12 +83,13 @@ class YaguarSpider(scrapy.Spider):
     def parse(self, response):
         logger.info(f"Scraping started at {time.strftime('%H:%M:%S')}")
 
-        CLEANING_CAT_LINK = 'refDepto3'
-        cleaning_cat_link = self.driver.find_element(By.ID, CLEANING_CAT_LINK)
-        cleaning_cat_link.click()
+        # CAT_LINK = 'refDepto3' ---> Cleaning category
+        CAT_LINK = 'refDepto4'  # ---> Perfumery category
+        cat_link = self.driver.find_element(By.ID, CAT_LINK)
+        cat_link.click()
 
-        LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto=3&IdCategoria={category_id}\');"]'
-        for category_name, category_id in CLEANING_CATEGORIES:
+        LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto=4&IdCategoria={category_id}\');"]'  
+        for category_name, category_id in CATEGORIES:
             category_link = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
             category_link.click()
 
