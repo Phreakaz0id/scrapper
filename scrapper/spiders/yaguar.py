@@ -1,3 +1,4 @@
+import os
 import re
 import scrapy
 import time
@@ -74,6 +75,11 @@ class YaguarSpider(scrapy.Spider):
             "price"
         ]
     }
+
+    def __init__(self):
+        self.username = os.environ["YAGUAR_USERNAME"]
+        self.password = os.environ["YAGUAR_PASSWORD"]
+        super().__init__()
 
     def start_requests(self):
         self.login()
@@ -185,10 +191,10 @@ class YaguarSpider(scrapy.Spider):
         )
 
         username_input = self.driver.find_element(By.XPATH, USERNAME_INPUT)
-        username_input.send_keys('***REMOVED***')
+        username_input.send_keys(self.username)
 
         password_input = self.driver.find_element(By.XPATH, PASSWORD_INPUT)
-        password_input.send_keys('***REMOVED***')
+        password_input.send_keys(self.password)
 
         login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
         login_button.click()

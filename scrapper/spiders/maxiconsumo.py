@@ -1,3 +1,4 @@
+import os
 import re
 import scrapy
 import time
@@ -29,6 +30,9 @@ class MaxiconsumoSpider(scrapy.Spider):
     def __init__(self, category, max_pages):
         self.category = category
         self.max_pages = max_pages
+
+        self.username = os.environ["MAXICONSUMO_USERNAME"]
+        self.password = os.environ["MAXICONSUMO_PASSWORD"]
         super().__init__()
 
     def start_requests(self):
@@ -44,10 +48,10 @@ class MaxiconsumoSpider(scrapy.Spider):
 
         wait = WebDriverWait(self.driver, 5)
         user_input = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="email"]')))
-        user_input.send_keys('***REMOVED***')
+        user_input.send_keys(self.username)
 
         password_input = self.driver.find_element(By.XPATH, '//*[@id="pass"]')
-        password_input.send_keys('***REMOVED***')
+        password_input.send_keys(self.password)
 
         enter_button = self.driver.find_element(By.XPATH, '//*[@id="send2"]')
         enter_button.click()

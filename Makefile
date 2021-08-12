@@ -1,12 +1,9 @@
-
-
+ENV = .env
 
 export GREEN=\033[0;32m
 export NOFORMAT=\033[0m
 
 default: help
-
-
 
 #❓ help: @ Displays this message
 help:
@@ -23,17 +20,21 @@ help:
 	@grep -E '[a-zA-Z\.\-]+:.*?@ .*$$' $(MAKEFILE_LIST)| tr -d '#'  | awk 'BEGIN {FS = ":.*?@ "}; {printf "${GREEN}%-30s${NOFORMAT} %s\n", $$1, $$2}'
 
 #❓ scrap.maxiconsumo.limpieza: @ Scraps limpieza category from maxiconsumo website
+scrap.maxiconsumo.limpieza: SHELL:=/bin/bash
 scrap.maxiconsumo.limpieza:
-	scrapy crawl maxiconsumo -s LOG_ENABLED=0 -o maxiconsumo_limpieza.csv -a category="limpieza" -a max_pages=14
+	@source ${ENV} ENV && scrapy crawl maxiconsumo -s LOG_ENABLED=0 -o maxiconsumo_limpieza.csv -a category="limpieza" -a max_pages=14
 
 #❓ scrap.maxiconsumo.perfumeria: @ Scraps perfumeria category from maxiconsumo website
+scrap.maxiconsumo.perfumeria: SHELL:=/bin/bash
 scrap.maxiconsumo.perfumeria:
-	scrapy crawl maxiconsumo -s LOG_ENABLED=0 -o maxiconsumo_perfumeria.csv -a category="perfumeria" -a max_pages=18
+	@source ${ENV} ENV && scrapy crawl maxiconsumo -s LOG_ENABLED=0 -o maxiconsumo_perfumeria.csv -a category="perfumeria" -a max_pages=18
 
 #❓ scrap.yaguar.limpieza: @ Scraps limpieza category from yaguar website
+scrap.yaguar.limpieza: SHELL:=/bin/bash
 scrap.yaguar.limpieza:
-	scrapy crawl yaguar -s LOG_ENABLED=0 -o yaguar_limpieza.csv
+	@source ${ENV} ENV && scrapy crawl yaguar -s LOG_ENABLED=0 -o yaguar_limpieza.csv
 
 #❓ scrap.yaguar.perfumeria: @ Scraps perfumeria category from yaguar website
+scrap.yaguar.perfumeria: SHELL:=/bin/bash
 scrap.yaguar.perfumeria:
-	scrapy crawl yaguar -s LOG_ENABLED=0 -o yaguar_perfumeria.csv
+	@source ${ENV} ENV && scrapy crawl yaguar -s LOG_ENABLED=0 -o yaguar_perfumeria.csv
