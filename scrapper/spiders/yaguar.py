@@ -11,49 +11,55 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-# ---> Categoria de Limpieza
-# CATEGORIES = [
-#     ('ACCESORIOS DE LIMPIEZA', '9'),
-#     ('ADITIVOS PARA LA ROPA', '8'),
-#     ('ALCOHOL QUEMAR', '22'),
-#     ('APRESTOS', '6'),
-#     ('CERAS', '11'),
-#     ('DESODORANTES DE AMBIENTE', '29'),
-#     ('DESTAPA CAÑERIAS', '30'),
-#     ('DETERGENTES Y LAVAVAJILLAS', '3'),
-#     ('INSECTICIDAS', '13'),
-#     ('JABON PARA LA ROPA', '1'),
-#     ('LAVANDINA', '4'),
-#     ('LIMPIADORES', '5'),
-#     ('LIMPIADORES DE PISOS', '10'),
-#     ('LUSTRAMUEBLES', '33'),
-#     ('POMADA PARA CALZAD', '18'),
-#     ('ROL.COC/SERVILL', '2'),
-#     ('SUAVIZANTES', '12'),
-# ]
+# Categoria de Limpieza
+CLEANING_DATA = {
+    'CAT_LINK': 'refDepto3',
+    'CATEGORIES': [
+        ('ACCESORIOS DE LIMPIEZA', '9'),
+        ('ADITIVOS PARA LA ROPA', '8'),
+        ('ALCOHOL QUEMAR', '22'),
+        ('APRESTOS', '6'),
+        ('CERAS', '11'),
+        ('DESODORANTES DE AMBIENTE', '29'),
+        ('DESTAPA CAÑERIAS', '30'),
+        ('DETERGENTES Y LAVAVAJILLAS', '3'),
+        ('INSECTICIDAS', '13'),
+        ('JABON PARA LA ROPA', '1'),
+        ('LAVANDINA', '4'),
+        ('LIMPIADORES', '5'),
+        ('LIMPIADORES DE PISOS', '10'),
+        ('LUSTRAMUEBLES', '33'),
+        ('POMADA PARA CALZAD', '18'),
+        ('ROL.COC/SERVILL', '2'),
+        ('SUAVIZANTES', '12'),
+    ]
+}
 
-# ---> Categoria de Perfumeria
-CATEGORIES = [
-    ('CERAS DEPILATORIAS', '34'),
-    ('COLONIAS Y PERFUMES', '10'),
-    ('CREMAS CORPORALES', '12'),
-    ('CUIDADO CAPILAR', '14'),
-    ('CUIDADO DENTAL', '8'),
-    ('DESODORANTES PERSONALES', '11'),
-    ('ESMALTES Y QUITAESMALTES', '29'),
-    ('ESPONJAS DE BAÑO', '46'),
-    ('FILOS PARA AFEITAR', '26'),
-    ('GELES DE BAÑO', '13'),
-    ('JABON TOCADOR', '19'),
-    ('PAÑALES Y TOALLAS HUMEDAS', '5'),
-    ('PAÑUELOS DESCAR', '28'),
-    ('PRODUCTOS FARMACIA', '1'),
-    ('PRODUCTOS PARA BEBES', '6'),
-    ('PROTECCION FEMENINA', '16'),
-    ('TALCOS/POLVOS', '9'),
-    ('TINTURAS', '30'),
-    ('TOALLAS DESMAQUILLANTES', '18')
-]
+# Categoria de Perfumeria
+PERFUMERY_DATA = {
+    'CAT_LINK': 'refDepto4',
+    'CATEGORIES': [
+        ('CERAS DEPILATORIAS', '34'),
+        ('COLONIAS Y PERFUMES', '10'),
+        ('CREMAS CORPORALES', '12'),
+        ('CUIDADO CAPILAR', '14'),
+        ('CUIDADO DENTAL', '8'),
+        ('DESODORANTES PERSONALES', '11'),
+        ('ESMALTES Y QUITAESMALTES', '29'),
+        ('ESPONJAS DE BAÑO', '46'),
+        ('FILOS PARA AFEITAR', '26'),
+        ('GELES DE BAÑO', '13'),
+        ('JABON TOCADOR', '19'),
+        ('PAÑALES Y TOALLAS HUMEDAS', '5'),
+        ('PAÑUELOS DESCAR', '28'),
+        ('PRODUCTOS FARMACIA', '1'),
+        ('PRODUCTOS PARA BEBES', '6'),
+        ('PROTECCION FEMENINA', '16'),
+        ('TALCOS/POLVOS', '9'),
+        ('TINTURAS', '30'),
+        ('TOALLAS DESMAQUILLANTES', '18')
+    ]
+}
 
 CODE_X_PATH = '/html/body/table/tbody/tr[3]/td/table/tbody/tr[{row}]/td/table/tbody/tr/td[1]/table/tbody/tr/td[2]/p'
 
@@ -76,7 +82,9 @@ class YaguarSpider(scrapy.Spider):
         ]
     }
 
-    def __init__(self):
+    def __init__(self, category):
+        self.category = self.get_subcategories_by_category(category)
+
         self.username = os.environ["YAGUAR_USERNAME"]
         self.password = os.environ["YAGUAR_PASSWORD"]
         super().__init__()
@@ -89,12 +97,14 @@ class YaguarSpider(scrapy.Spider):
     def parse(self, response):
         logger.info(f"Scraping started at {time.strftime('%H:%M:%S')}")
 
-        # CAT_LINK = 'refDepto3' ---> Cleaning category
-        CAT_LINK = 'refDepto4'  # ---> Perfumery category
-        cat_link = self.driver.find_element(By.ID, CAT_LINK)
+        category_link_id = self.category['CAT_LINK']
+        cat_link = self.driver.find_element(By.ID, category_link_id)
         cat_link.click()
 
-        LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto=4&IdCategoria={category_id}\');"]'  
+        CATEGORIES = self.category['CATEGORIES']
+
+        ref_depto = category_link_id.split('refDepto')[1]
+        LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto={ref_depto}&IdCategoria={category_id}\');"]'.replace('{ref_depto}', ref_depto)
         for category_name, category_id in CATEGORIES:
             category_link = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
             category_link.click()
@@ -201,3 +211,9 @@ class YaguarSpider(scrapy.Spider):
 
     def get_page_from_pages_text(self, pages_text):
         return int(re.search(r'Página 1 de (.*?) ', pages_text).group(1))
+
+    def get_subcategories_by_category(self, category):
+        if category == "perfumeria":
+            return PERFUMERY_DATA
+        else:
+            return CLEANING_DATA
