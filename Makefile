@@ -32,9 +32,13 @@ scrap.maxiconsumo.perfumeria:
 #❓ scrap.yaguar.limpieza: @ Scraps limpieza category from yaguar website
 scrap.yaguar.limpieza: SHELL:=/bin/bash
 scrap.yaguar.limpieza:
-	@source ${ENV} ENV && scrapy crawl yaguar -s LOG_ENABLED=0 -o yaguar_limpieza.csv
+	@source ${ENV} ENV && scrapy crawl yaguar -s LOG_ENABLED=1 -o yaguar_limpieza.csv -a category="limpieza"
 
 #❓ scrap.yaguar.perfumeria: @ Scraps perfumeria category from yaguar website
 scrap.yaguar.perfumeria: SHELL:=/bin/bash
 scrap.yaguar.perfumeria:
-	@source ${ENV} ENV && scrapy crawl yaguar -s LOG_ENABLED=0 -o yaguar_perfumeria.csv
+	@source ${ENV} ENV && scrapy crawl yaguar -s LOG_ENABLED=1 -o yaguar_perfumeria.csv -a category="perfumeria"
+
+#📦 setup: @ Installs dependencies
+setup:
+	@pip install -r requirements.txt
