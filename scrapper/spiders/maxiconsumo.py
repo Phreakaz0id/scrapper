@@ -2,21 +2,26 @@ import os
 import re
 import scrapy
 import time
+
 from ..items import MaxiconsumoItem
+
 from datetime import datetime
 from logzero import logger, logfile
+
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-logfile_name = datetime.now().strftime("%m-%d-%Y")
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.utils import ChromeType
+
+
+LOGS_PATH = 'logs'
+logfile_prefix = datetime.now().strftime("%m-%d-%Y")
 
 
 class MaxiconsumoSpider(scrapy.Spider):
-    # Initializing log file
-    logfile(f"{logfile_name}_maxiconsumo.log", maxBytes=1e6, backupCount=3)
     name = 'maxiconsumo'
     category = ""
     max_pages = 0
@@ -35,7 +40,7 @@ class MaxiconsumoSpider(scrapy.Spider):
 
     def __init__(self, category, max_pages):
         # Initializing log file
-        logfile(f"{logfile_name}_{self.name}.log", maxBytes=1e6, backupCount=3)
+        logfile(f"{LOGS_PATH}/{logfile_prefix}_maxiconsumo.log", maxBytes=1e6, backupCount=3)
         self.category = category
         self.max_pages = max_pages
 
@@ -44,15 +49,20 @@ class MaxiconsumoSpider(scrapy.Spider):
         super().__init__()
 
     def start_requests(self):
+        self.set_driver()
         self.login()
         url = 'http://quotes.toscrape.com/'
         yield scrapy.Request(url=url, callback=self.parse)
 
-    def login(self):
+    def set_driver(self):
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        self.driver = webdriver.Chrome(
+            ChromeDriverManager().install(),
+            options=options
+        )
 
+    def login(self):
         self._log("👋 Requesting log in url...")
         self.driver.get(self.login_url)
 

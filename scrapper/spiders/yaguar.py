@@ -2,17 +2,23 @@ import os
 import re
 import scrapy
 import time
+
 from ..items import YaguarItem
+
 from datetime import datetime
 from logzero import logger, logfile
+
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
 
-logfile_name = datetime.now().strftime("%m-%d-%Y")
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.utils import ChromeType
+
+LOGS_PATH = 'logs'
+logfile_prefix = datetime.now().strftime("%m-%d-%Y")
 
 # Categoria de Limpieza
 CLEANING_DATA = {
@@ -85,7 +91,7 @@ class YaguarSpider(scrapy.Spider):
 
     def __init__(self, category):
         # Initializing log file
-        logfile(f"{logfile_name}_{self.name}.log", maxBytes=1e6, backupCount=3)
+        logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}.log", maxBytes=1e6, backupCount=3)
 
         self.category = category
         self.categories = self.get_subcategories_by_category(category)
@@ -98,6 +104,44 @@ class YaguarSpider(scrapy.Spider):
         self.login()
         url = 'https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/'
         yield scrapy.Request(url=url, callback=self.parse)
+
+    def set_driver(self):
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        self.driver = webdriver.Chrome(
+            ChromeDriverManager().install(),
+            options=options
+        )
+
+    def login(self):
+        # Use headless option to not open a new browser window
+        options = webdriver.ChromeOptions()
+        # options.add_argument("--headless")
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+
+        self._log("👋 Requesting log in url...")
+        self.driver.get('https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/')
+
+        USERNAME_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[1]/input'
+        PASSWORD_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[1]'
+        LOGIN_BUTTON = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[2]'
+
+        self._log("👋 Ready to log in...")
+        # Wait for page to load
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, USERNAME_INPUT))
+        )
+
+        username_input = self.driver.find_element(By.XPATH, USERNAME_INPUT)
+        username_input.send_keys(self.username)
+
+        password_input = self.driver.find_element(By.XPATH, PASSWORD_INPUT)
+        password_input.send_keys(self.password)
+
+        login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
+        login_button.click()
+
+        self._log("👋✅ Succesfully logged in!")
 
     def parse(self, response):
         self._log(f"⏰ Scraping started at {time.strftime('%H:%M:%S')}")
@@ -197,36 +241,6 @@ class YaguarSpider(scrapy.Spider):
                 pass
 
         return products
-
-    def login(self):
-        # Use headless option to not open a new browser window
-        options = webdriver.ChromeOptions()
-        # options.add_argument("--headless")
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-
-        self._log("👋 Requesting log in url...")
-        self.driver.get('https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/')
-
-        USERNAME_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[1]/input'
-        PASSWORD_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[1]'
-        LOGIN_BUTTON = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[2]'
-
-        self._log("👋 Ready to log in...")
-        # Wait for page to load
-        WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, USERNAME_INPUT))
-        )
-
-        username_input = self.driver.find_element(By.XPATH, USERNAME_INPUT)
-        username_input.send_keys(self.username)
-
-        password_input = self.driver.find_element(By.XPATH, PASSWORD_INPUT)
-        password_input.send_keys(self.password)
-
-        login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
-        login_button.click()
-
-        self._log("👋✅ Succesfully logged in!")
 
     def get_page_from_pages_text(self, pages_text):
         return int(re.search(r'Página 1 de (.*?) ', pages_text).group(1))
