@@ -4,6 +4,7 @@ import scrapy
 import time
 
 from ..items import MaxiconsumoItem
+from ..driver_utils import set_driver
 
 from datetime import datetime
 from logzero import logger, logfile
@@ -55,12 +56,7 @@ class MaxiconsumoSpider(scrapy.Spider):
         yield scrapy.Request(url=url, callback=self.parse)
 
     def set_driver(self):
-        options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
-        self.driver = webdriver.Chrome(
-            ChromeDriverManager().install(),
-            options=options
-        )
+        self.driver = set_driver()
 
     def login(self):
         self._log("👋 Requesting log in url...")

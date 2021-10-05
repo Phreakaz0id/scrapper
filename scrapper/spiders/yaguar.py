@@ -3,6 +3,7 @@ import re
 import scrapy
 import time
 
+from ..driver_utils import set_driver
 from ..items import YaguarItem
 
 from datetime import datetime
@@ -106,12 +107,7 @@ class YaguarSpider(scrapy.Spider):
         yield scrapy.Request(url=url, callback=self.parse)
 
     def set_driver(self):
-        options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
-        self.driver = webdriver.Chrome(
-            ChromeDriverManager().install(),
-            options=options
-        )
+        self.driver = set_driver()
 
     def login(self):
         # Use headless option to not open a new browser window
