@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-logfile_name = datetime.now().strftime("%m-%d-%Y-%H:%M:%S")
+logfile_name = datetime.now().strftime("%m-%d-%Y")
 
 # Categoria de Limpieza
 CLEANING_DATA = {
@@ -70,8 +70,6 @@ ELEMENTS_PER_PAGE = list(range(1, 40, 2))
 
 
 class YaguarSpider(scrapy.Spider):
-    # Initializing log file
-    logfile(f"{logfile_name}_yaguar.log", maxBytes=1e6, backupCount=3)
     name = 'yaguar'
     allowed_domains = ['https://shop.yaguar.com.ar/frontendSP/asp/home.asp#']
     start_urls = ['https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/']
@@ -86,6 +84,9 @@ class YaguarSpider(scrapy.Spider):
     }
 
     def __init__(self, category):
+        # Initializing log file
+        logfile(f"{logfile_name}_{self.name}.log", maxBytes=1e6, backupCount=3)
+
         self.category = category
         self.categories = self.get_subcategories_by_category(category)
 

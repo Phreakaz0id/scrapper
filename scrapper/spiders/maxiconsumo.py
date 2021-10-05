@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-logfile_name = datetime.now().strftime("%m-%d-%Y-%H:%M:%S")
+logfile_name = datetime.now().strftime("%m-%d-%Y")
 
 
 class MaxiconsumoSpider(scrapy.Spider):
@@ -34,6 +34,8 @@ class MaxiconsumoSpider(scrapy.Spider):
     }
 
     def __init__(self, category, max_pages):
+        # Initializing log file
+        logfile(f"{logfile_name}_{self.name}.log", maxBytes=1e6, backupCount=3)
         self.category = category
         self.max_pages = max_pages
 
@@ -70,7 +72,7 @@ class MaxiconsumoSpider(scrapy.Spider):
     def parse(self, response):
         self._log("🛠 Preparing urls to browse...")
         urls = self.generate_paged_urls('https://maxiconsumo.com/sucursal_burzaco/{category}.html?p={p}&product_list_limit=96', self.category, int(self.max_pages))
-        self._log(f"🛠 {len(urls)} urls ready to scn.")
+        self._log(f"🛠 {len(urls)} urls ready to scan.")
 
         self._log(f"⏰ Scraping started at {time.strftime('%H:%M:%S')}")
 
@@ -78,7 +80,7 @@ class MaxiconsumoSpider(scrapy.Spider):
         for url in urls:
             self.driver.get(url)
 
-            self._log(f"Requested {len(url_counter)}/{len(urls)} urls... ({url})")
+            self._log(f"Requested {url_counter}/{len(urls)} urls... ({url})")
 
             wait = WebDriverWait(self.driver, 5)
 
