@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from twisted.internet import reactor
-from scrapy.crawler import CrawlerRunner
+from scrapy.crawler import CrawlerRunner, CrawlerProcess
 from scrapper.spiders.maxiconsumo import MaxiconsumoSpider
 from scrapper.spiders.yaguar import YaguarSpider
 
@@ -28,21 +28,24 @@ if __name__ == "__main__":
             },
             "args": {
                 "category": "limpieza",
-                "max_pages": 1
+                "max_pages": 1,
+                "custom_settings": {
+                    'FEED_URI': 'now_maxiconsumo_limpieza.csv'
+                }
                 # "max_pages": 14
             }
         },
-        {
-            "settings": {
-                "feed_format": "csv",
-                "type": "maxiconsumo"
-            },
-            "args": {
-                "category": "perfumeria",
-                "max_pages": 1
-                # "max_pages": 18
-            }
-        }
+        # {
+        #     "settings": {
+        #         "feed_format": "csv",
+        #         "type": "maxiconsumo"
+        #     },
+        #     "args": {
+        #         "category": "perfumeria",
+        #         "max_pages": 1
+        #         # "max_pages": 18
+        #     }
+        # }
     ]
 
     now = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
@@ -54,18 +57,18 @@ if __name__ == "__main__":
 
         args = job["args"]
 
-        runner = CrawlerRunner({
+        process = CrawlerProcess({
             # 'DOWNLOAD_DELAY': 0.25,
             'DOWNLOAD_DELAY': 0,
             # 'FEED_URI': f"{now}_{job_type}_{category}.csv",
-            'FEED_URI': f"{now}_{job_type}_{category}.csv",
+            # 'FEED_URI': f"{now}_{job_type}_{category}.csv",
             'FEED_FORMAT': feed_format
         })
         spider = get_spider_by_type(job_type)
-        runner.crawl(
+        process.crawl(
             spider,
             **args
         )
-        d = runner.join()
-        d.addBoth(lambda _: reactor.stop())
-        reactor.run() 
+        # d = runner.join()
+        # d.addBoth(lambda _: reactor.stop())
+        process.start()
