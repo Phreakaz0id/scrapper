@@ -3,6 +3,7 @@ import re
 import scrapy
 import time
 from ..items import YaguarItem
+from datetime import datetime
 from logzero import logger, logfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -10,6 +11,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
+
+logfile_name = datetime.now().strftime("%m-%d-%Y-%H:%M:%S")
 
 # Categoria de Limpieza
 CLEANING_DATA = {
@@ -68,7 +71,7 @@ ELEMENTS_PER_PAGE = list(range(1, 40, 2))
 
 class YaguarSpider(scrapy.Spider):
     # Initializing log file
-    logfile('scrapper_spider.log', maxBytes=16, backupCount=3)
+    logfile(f"{logfile_name}_yaguar.log", maxBytes=1e6, backupCount=3)
     name = 'yaguar'
     allowed_domains = ['https://shop.yaguar.com.ar/frontendSP/asp/home.asp#']
     start_urls = ['https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/']
@@ -83,7 +86,8 @@ class YaguarSpider(scrapy.Spider):
     }
 
     def __init__(self, category):
-        self.category = self.get_subcategories_by_category(category)
+        self.category = category
+        self.categories = self.get_subcategories_by_category(category)
 
         self.username = os.environ["YAGUAR_USERNAME"]
         self.password = os.environ["YAGUAR_PASSWORD"]
@@ -95,17 +99,18 @@ class YaguarSpider(scrapy.Spider):
         yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
-        logger.info(f"Scraping started at {time.strftime('%H:%M:%S')}")
+        self._log(f"⏰ Scraping started at {time.strftime('%H:%M:%S')}")
 
-        category_link_id = self.category['CAT_LINK']
+        category_link_id = self.categories['CAT_LINK']
         cat_link = self.driver.find_element(By.ID, category_link_id)
         cat_link.click()
 
-        CATEGORIES = self.category['CATEGORIES']
+        CATEGORIES = self.categories['CATEGORIES']
 
         ref_depto = category_link_id.split('refDepto')[1]
         LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto={ref_depto}&IdCategoria={category_id}\');"]'.replace('{ref_depto}', ref_depto)
         for category_name, category_id in CATEGORIES:
+            self._log(f"🕷 Start parsing the {category_name} category.")
             category_link = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
             category_link.click()
 
@@ -114,7 +119,9 @@ class YaguarSpider(scrapy.Spider):
             # Search the iframe
             iframe = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, "//*[@id=\"ifrContenido\"]")))
 
+            self._log("🧪 Switching from default context (main page) to iframe context (product list) to scan products...")
             self.driver.switch_to.frame(iframe)
+            self._log("🧪 Inside iframe context (product list), ready to scan products.")
 
             pages_text = self.driver.find_element_by_class_name('tcceleste').text
             max_pages = self.get_page_from_pages_text(pages_text)
@@ -122,31 +129,38 @@ class YaguarSpider(scrapy.Spider):
             products = []
             products = self.search_products_in_page(products)
             max_pages = max_pages - 1
-            print(f"{max_pages} remaining...")
+
+            self._log(f"🕷 {max_pages} pages remainig for {category_name} category.")
 
             while max_pages != 0:
                 try:
                     next_page = self.driver.find_element_by_xpath("//*[contains(text(),'siguiente')]")
                     next_page.click()
                 except NoSuchElementException:
-                    print("No more pages, switching category")
+                    self._log(f"🕷 No more pages for {category_name} category. Switching category.")
 
                 products = self.search_products_in_page(products)
                 max_pages = max_pages - 1
 
-                print(f"{max_pages} remaining...")
+                self._log(f"🕷 {max_pages} pages remainig for {category_name} category.")
 
             products = list(set(products))
 
+            self._log(f"📦 Ready to dump {len(products)} products data to csv items.")
             for product in products:
                 item = self.create_item(category_name, product)
                 yield item
+            self._log(f"📦✅ Succesfully dumped {len(products)} products data to csv.")
 
+            self._log("🧪 Switching from iframe context (product list) to default context (main page) to browse categories...")
             self.driver.switch_to.default_content()
+            self._log("🧪 Back to default context (main page).")
 
         time.sleep(3)
         self.driver.stop_client()
         self.driver.close()
+
+        self._log("🎉 Scrapping finished succesfully.")
 
     def create_item(self, category_name, product):
         code = product[0]
@@ -189,12 +203,14 @@ class YaguarSpider(scrapy.Spider):
         # options.add_argument("--headless")
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
+        self._log("👋 Requesting log in url...")
         self.driver.get('https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/')
 
         USERNAME_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[1]/input'
         PASSWORD_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[1]'
         LOGIN_BUTTON = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[2]'
 
+        self._log("👋 Ready to log in...")
         # Wait for page to load
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.XPATH, USERNAME_INPUT))
@@ -209,6 +225,8 @@ class YaguarSpider(scrapy.Spider):
         login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
         login_button.click()
 
+        self._log("👋✅ Succesfully logged in!")
+
     def get_page_from_pages_text(self, pages_text):
         return int(re.search(r'Página 1 de (.*?) ', pages_text).group(1))
 
@@ -217,3 +235,7 @@ class YaguarSpider(scrapy.Spider):
             return PERFUMERY_DATA
         else:
             return CLEANING_DATA
+
+    def _log(self, message):
+        prefix = f"[{self.name}:{self.category}]"
+        logger.info(prefix + " " + message)
