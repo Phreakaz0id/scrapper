@@ -102,6 +102,7 @@ class YaguarSpider(scrapy.Spider):
         super().__init__()
 
     def start_requests(self):
+        self.set_driver()
         self.login()
         url = 'https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/'
         yield scrapy.Request(url=url, callback=self.parse)
@@ -110,11 +111,6 @@ class YaguarSpider(scrapy.Spider):
         self.driver = set_driver()
 
     def login(self):
-        # Use headless option to not open a new browser window
-        options = webdriver.ChromeOptions()
-        # options.add_argument("--headless")
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-
         self._log("👋 Requesting log in url...")
         self.driver.get('https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/')
 
@@ -164,7 +160,22 @@ class YaguarSpider(scrapy.Spider):
             self.driver.switch_to.frame(iframe)
             self._log("🧪 Inside iframe context (product list), ready to scan products.")
 
-            pages_text = self.driver.find_element_by_class_name('tcceleste').text
+            pages_text = None
+            try:
+                self._log("🕷 Searching for pages...")
+                pages_text = self.driver.find_element_by_class_name('tcceleste').text
+            except NoSuchElementException:
+                self._log(f"🕷 No more pages for {category_name} category. Switching category.")
+
+            if pages_text is None:
+                self._log(f"🕷 No product pages in '{category_name}'. Skipping category.")
+                self._log("🧪 Switching from iframe context (product list) to default context (main page) to browse categories...")
+                self.driver.switch_to.default_content()
+                self._log("🧪 Back to default context (main page).")
+                continue
+
+            self._log(f"🕷 Found {pages_text} page/s. Searching products...")
+
             max_pages = self.get_page_from_pages_text(pages_text)
 
             products = []
