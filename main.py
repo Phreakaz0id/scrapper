@@ -7,6 +7,9 @@ from scrapper.spiders.maxiconsumo import MaxiconsumoSpider
 from scrapper.spiders.yaguar import YaguarSpider
 
 
+OUTPUT_PATH = 'output'
+
+
 def get_spider_by_type(_type):
     types = {
         "yaguar": YaguarSpider,
@@ -17,9 +20,7 @@ def get_spider_by_type(_type):
 
 if __name__ == "__main__":
 
-    # os.environ.get('JOBS')
-    # exit()
-
+    now = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
     jobs = [
         {
             "settings": {
@@ -29,9 +30,6 @@ if __name__ == "__main__":
             "args": {
                 "category": "limpieza",
                 "max_pages": 1,
-                "custom_settings": {
-                    'FEED_URI': 'now_maxiconsumo_limpieza.csv'
-                }
                 # "max_pages": 14
             }
         },
@@ -42,13 +40,29 @@ if __name__ == "__main__":
         #     },
         #     "args": {
         #         "category": "perfumeria",
-        #         "max_pages": 1
+        #         "max_pages": 18
         #         # "max_pages": 18
         #     }
         # }
+        # {
+        #     "settings": {
+        #         "feed_format": "csv",
+        #         "type": "yaguar"
+        #     },
+        #     "args": {
+        #         "category": "perfumeria"
+        #     }
+        # }
+        # {
+        #     "settings": {
+        #         "feed_format": "csv",
+        #         "type": "yaguar"
+        #     },
+        #     "args": {
+        #         "category": "limpieza"
+        #     }
+        # }
     ]
-
-    now = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 
     for job in jobs:
         feed_format = job["settings"]["feed_format"]
@@ -60,7 +74,7 @@ if __name__ == "__main__":
         process = CrawlerProcess({
             # 'DOWNLOAD_DELAY': 0.25,
             'DOWNLOAD_DELAY': 0,
-            # 'FEED_URI': f"{now}_{job_type}_{category}.csv",
+            'FEED_URI': f"{OUTPUT_PATH}/{now}_{job_type}_{category}.csv",
             # 'FEED_URI': f"{now}_{job_type}_{category}.csv",
             'FEED_FORMAT': feed_format
         })
