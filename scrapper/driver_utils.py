@@ -12,6 +12,9 @@ def set_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--no-sandbox')
     options.add_argument('--remote-debugging-port=9222')
+    chrome_driver = os.environ.get("CHROME_DRIVER")
+    if chrome_driver is None:
+        raise Exception("CHROME_DRIVER env is not defined")
     options.binary_location = os.environ.get("CHROME_DRIVER")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--headless")
