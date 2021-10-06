@@ -92,7 +92,7 @@ class YaguarSpider(scrapy.Spider):
 
     def __init__(self, category):
         # Initializing log file
-        logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}.log", maxBytes=1e6, backupCount=3)
+        logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
 
         self.category = category
         self.categories = self.get_subcategories_by_category(category)

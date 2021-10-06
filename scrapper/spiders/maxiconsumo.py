@@ -41,7 +41,7 @@ class MaxiconsumoSpider(scrapy.Spider):
 
     def __init__(self, category, max_pages):
         # Initializing log file
-        logfile(f"{LOGS_PATH}/{logfile_prefix}_maxiconsumo.log", maxBytes=1e6, backupCount=3)
+        logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
         self.category = category
         self.max_pages = max_pages
 
