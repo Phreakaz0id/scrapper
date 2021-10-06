@@ -6,7 +6,7 @@ import time
 from ..items import MaxiconsumoItem
 from ..driver_utils import set_driver
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from logzero import logger, logfile
 
 from selenium import webdriver
@@ -14,9 +14,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.utils import ChromeType
-
+from timeit import default_timer as timer
 
 LOGS_PATH = 'logs'
 logfile_prefix = datetime.now().strftime("%m-%d-%Y")
@@ -40,6 +38,8 @@ class MaxiconsumoSpider(scrapy.Spider):
     }
 
     def __init__(self, category, max_pages):
+        # Initializing timer
+        self.start_timer = timer()
         # Initializing log file
         logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
         self.category = category
@@ -84,9 +84,8 @@ class MaxiconsumoSpider(scrapy.Spider):
 
         url_counter = 1
         for url in urls:
+            self._log(f"⏰ Requesting {url_counter}/{len(urls)} urls... ({url})")
             self.driver.get(url)
-
-            self._log(f"Requested {url_counter}/{len(urls)} urls... ({url})")
 
             wait = WebDriverWait(self.driver, 5)
 
@@ -108,6 +107,7 @@ class MaxiconsumoSpider(scrapy.Spider):
                 item = self.create_item(product_name, code, product_href, bundle_price, unit_price)
                 yield item
             self._log(f"📦✅ Succesfully dumped {len(products_list)} products data to csv.")
+            url_counter += 1
 
         # Terminate Session
         time.sleep(3)
@@ -115,6 +115,9 @@ class MaxiconsumoSpider(scrapy.Spider):
         self.driver.close()
 
         self._log("🎉 Scrapping finished succesfully.")
+        end = timer()
+        elapsed_time = timedelta(seconds=end - self.start_timer)
+        self._log(f"⏰ Total elapsed time: {elapsed_time}.")
 
     def generate_paged_urls(self, base_url, category: str, max_pages_num: int):
         urls_list = []

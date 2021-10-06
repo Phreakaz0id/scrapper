@@ -6,7 +6,7 @@ import time
 from ..driver_utils import set_driver
 from ..items import YaguarItem
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from logzero import logger, logfile
 
 from selenium import webdriver
@@ -15,8 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.utils import ChromeType
+from timeit import default_timer as timer
 
 LOGS_PATH = 'logs'
 logfile_prefix = datetime.now().strftime("%m-%d-%Y")
@@ -91,6 +90,8 @@ class YaguarSpider(scrapy.Spider):
     }
 
     def __init__(self, category):
+        # Initializing timer
+        self.start_timer = timer()
         # Initializing log file
         logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
 
@@ -213,6 +214,9 @@ class YaguarSpider(scrapy.Spider):
         self.driver.close()
 
         self._log("🎉 Scrapping finished succesfully.")
+        end = timer()
+        elapsed_time = timedelta(seconds=end - self.start_timer)
+        self._log(f"⏰ Total elapsed time: {elapsed_time}.")
 
     def create_item(self, category_name, product):
         code = product[0]
