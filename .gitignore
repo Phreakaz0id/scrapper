@@ -16,3 +16,6 @@ __pycache__/
 # Output files
 *.json
 *.csv
+
+# Jobs
+jobs/*.json
