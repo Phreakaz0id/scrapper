@@ -8,9 +8,8 @@ from ..driver_utils import set_driver
 from settings import LOGS_DIR
 
 from datetime import datetime, timedelta
-from logzero import logger, logfile
+from logzero import logger
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -40,8 +39,7 @@ class MaxiconsumoSpider(scrapy.Spider):
     def __init__(self, category, max_pages):
         # Initializing timer
         self.start_timer = timer()
-        # Initializing log file
-        logfile(f"{LOGS_DIR}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
+
         self.category = category
         self.max_pages = max_pages
 
@@ -73,7 +71,7 @@ class MaxiconsumoSpider(scrapy.Spider):
         enter_button = self.driver.find_element(By.XPATH, '//*[@id="send2"]')
         enter_button.click()
 
-        self._log("👋✅ Succesfully logged in!")
+        self._log("✅ Succesfully logged in!")
 
     def parse(self, response):
         self._log("🛠 Preparing urls to browse...")
