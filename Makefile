@@ -24,9 +24,14 @@ clear.logs: SHELL:=/bin/bash
 clear.logs:
 	rm logs/*
 
-#🕷  main: @  Runs the main program using the environment settings
-main: SHELL:=/bin/bash
-main:
+#🗑  clear.output: @  Clears all output files
+clear.output: SHELL:=/bin/bash
+clear.output:
+	rm output/*
+
+#🕷  run: @  Runs the main program using the environment settings
+run: SHELL:=/bin/bash
+run:
 	@source ${ENV} && python main.py
 
 #🕷  scrap.maxiconsumo.limpieza: @  Scraps limpieza category from maxiconsumo website
