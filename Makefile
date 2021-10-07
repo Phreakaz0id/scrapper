@@ -19,6 +19,11 @@ help:
 	@echo ""
 	@grep -E '[a-zA-Z\.\-]+:.*?@ .*$$' $(MAKEFILE_LIST)| tr -d '#'  | awk 'BEGIN {FS = ":.*?@ "}; {printf "${GREEN}%-30s${NOFORMAT} %s\n", $$1, $$2}'
 
+#🕷  clear.logs: @ Clears all logs
+clear.logs: SHELL:=/bin/bash
+clear.logs:
+	rm logs/*
+
 #🕷  main: @ Loads environment and runs the main program
 main: SHELL:=/bin/bash
 main:
