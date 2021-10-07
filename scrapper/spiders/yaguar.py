@@ -10,15 +10,12 @@ from settings import LOGS_DIR
 from datetime import datetime, timedelta
 from logzero import logger, logfile
 
-from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 
 from timeit import default_timer as timer
-
-logfile_prefix = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 
 # Categoria de Limpieza
 CLEANING_DATA = {
@@ -40,7 +37,7 @@ CLEANING_DATA = {
         ('LUSTRAMUEBLES', '33'),
         ('POMADA PARA CALZAD', '18'),
         ('ROL.COC/SERVILL', '2'),
-        ('SUAVIZANTES', '12'),
+        ('SUAVIZANTES', '12'),  # T
     ]
 }
 
@@ -53,11 +50,12 @@ PERFUMERY_DATA = {
         ('CREMAS CORPORALES', '12'),
         ('CUIDADO CAPILAR', '14'),
         ('CUIDADO DENTAL', '8'),
+        ('CUIDADO DEL PIE', '48'),  # T
         ('DESODORANTES PERSONALES', '11'),
-        ('ESMALTES Y QUITAESMALTES', '29'),
+        ('ESMALTES Y QUITAESMALTES', '29'),  # T
         ('ESPONJAS DE BAÑO', '46'),
         ('FILOS PARA AFEITAR', '26'),
-        ('GELES DE BAÑO', '13'),
+        ('GELES DE BAÑO', '13'),  # T
         ('JABON TOCADOR', '19'),
         ('PAÑALES Y TOALLAS HUMEDAS', '5'),
         ('PAÑUELOS DESCAR', '28'),
@@ -92,8 +90,6 @@ class YaguarSpider(scrapy.Spider):
     def __init__(self, category):
         # Initializing timer
         self.start_timer = timer()
-        # Initializing log file
-        logfile(f"{LOGS_DIR}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
 
         self.category = category
         self.categories = self.get_subcategories_by_category(category)
@@ -134,7 +130,7 @@ class YaguarSpider(scrapy.Spider):
         login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
         login_button.click()
 
-        self._log("👋✅ Succesfully logged in!")
+        self._log("✅ Succesfully logged in!")
 
     def parse(self, response):
         self._log(f"⏰ Scraping started at {time.strftime('%H:%M:%S')}")
