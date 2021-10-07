@@ -5,6 +5,7 @@ import time
 
 from ..driver_utils import set_driver
 from ..items import YaguarItem
+from settings import LOGS_DIR
 
 from datetime import datetime, timedelta
 from logzero import logger, logfile
@@ -17,8 +18,7 @@ from selenium.webdriver.common.by import By
 
 from timeit import default_timer as timer
 
-LOGS_PATH = 'logs'
-logfile_prefix = datetime.now().strftime("%m-%d-%Y")
+logfile_prefix = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 
 # Categoria de Limpieza
 CLEANING_DATA = {
@@ -93,7 +93,7 @@ class YaguarSpider(scrapy.Spider):
         # Initializing timer
         self.start_timer = timer()
         # Initializing log file
-        logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
+        logfile(f"{LOGS_DIR}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
 
         self.category = category
         self.categories = self.get_subcategories_by_category(category)

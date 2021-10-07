@@ -5,6 +5,7 @@ import time
 
 from ..items import MaxiconsumoItem
 from ..driver_utils import set_driver
+from settings import LOGS_DIR
 
 from datetime import datetime, timedelta
 from logzero import logger, logfile
@@ -16,8 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from timeit import default_timer as timer
 
-LOGS_PATH = 'logs'
-logfile_prefix = datetime.now().strftime("%m-%d-%Y")
+logfile_prefix = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 
 
 class MaxiconsumoSpider(scrapy.Spider):
@@ -41,7 +41,7 @@ class MaxiconsumoSpider(scrapy.Spider):
         # Initializing timer
         self.start_timer = timer()
         # Initializing log file
-        logfile(f"{LOGS_PATH}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
+        logfile(f"{LOGS_DIR}/{logfile_prefix}_{self.name}_{category}.log", maxBytes=1e6, backupCount=3)
         self.category = category
         self.max_pages = max_pages
 
