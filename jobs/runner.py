@@ -59,4 +59,4 @@ def run_jobs(jobs):
     reactor.stop()
 
     logfile(MAIN_LOG_FILE)
-    logger.info(f"[{MODULE}]" + " 🏁 Finished all crawling jobs.")
+    logger.info(f"[{MODULE}]" + " 🏁 Finished all crawling jobs.\n")
