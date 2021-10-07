@@ -6,12 +6,6 @@
 from scrapy.item import Item, Field
 
 
-class ScrapperItem(Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
-
-
 class MaxiconsumoItem(Item):
     product_name = Field()
     code = Field()
