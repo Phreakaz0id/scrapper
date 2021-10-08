@@ -37,7 +37,7 @@ def build_logfile_name(job_type, category):
 
 
 @defer.inlineCallbacks
-def run_jobs(jobs, on_finish=None):
+def run_jobs(jobs, on_finish_callbacks=[]):
     logger.info(f"[{MODULE}] 🛠 Preparing jobs runner with settings [scrapy_settings: {scrapy_settings.__dict__}].")
     runner = CrawlerRunner(settings=scrapy_settings)
     for job in jobs:
@@ -59,5 +59,8 @@ def run_jobs(jobs, on_finish=None):
     reactor.stop()
 
     logfile(MAIN_LOG_FILE)
-    logger.info(f"[{MODULE}]" + " 🏁 Finished all crawling jobs.\n")
-    on_finish()
+    logger.info(f"[{MODULE}] ✅ Finished all crawling jobs.\n")
+
+    logger.info(f"[{MODULE}] 🏃‍♂️ Starting to run `on_finish` callbacks...")
+    [callback() for callback in on_finish_callbacks]
+    logger.info(f"[{MODULE}] 🏁 Finished running all callbacks.")
