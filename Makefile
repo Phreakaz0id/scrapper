@@ -61,3 +61,7 @@ scrap.yaguar.perfumeria:
 #📦 setup: @ Installs dependencies
 setup:
 	@pip install -r requirements.txt
+
+#📦 watch.cron: @ Watches crontab logs
+watch.cron:
+	@tail -f  grep CRON /var/log/syslog
