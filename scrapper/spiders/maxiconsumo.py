@@ -16,7 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from timeit import default_timer as timer
 
-logfile_prefix = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
+MODULE = __name__
 
 
 class MaxiconsumoSpider(scrapy.Spider):
@@ -57,10 +57,10 @@ class MaxiconsumoSpider(scrapy.Spider):
         self.driver = set_driver()
 
     def login(self):
-        self._log("👋 Requesting log in url...")
+        logger.info(f"[{MODULE}:{self.category}] 👋 Requesting log in url...")
         self.driver.get(self.login_url)
 
-        self._log("👋 Ready to log in...")
+        logger.info(f"[{MODULE}:{self.category}] 👋 Ready to log in...")
         wait = WebDriverWait(self.driver, 5)
         user_input = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="email"]')))
         user_input.send_keys(self.username)
@@ -71,28 +71,28 @@ class MaxiconsumoSpider(scrapy.Spider):
         enter_button = self.driver.find_element(By.XPATH, '//*[@id="send2"]')
         enter_button.click()
 
-        self._log("✅ Succesfully logged in!")
+        logger.info(f"[{MODULE}:{self.category}] ✅ Succesfully logged in!")
 
     def parse(self, response):
-        self._log("🛠 Preparing urls to browse...")
+        logger.info(f"[{MODULE}:{self.category}] 🛠 Preparing urls to browse...")
         urls = self.generate_paged_urls('https://maxiconsumo.com/sucursal_burzaco/{category}.html?p={p}&product_list_limit=96', self.category, int(self.max_pages))
-        self._log(f"🛠 {len(urls)} urls ready to scan.")
+        logger.info(f"[{MODULE}:{self.category}] 🛠 {len(urls)} urls ready to scan.")
 
-        self._log(f"⏰ Scraping started at {time.strftime('%H:%M:%S')}")
+        logger.info(f"[{MODULE}:{self.category}] ⏰ Scraping started at {time.strftime('%H:%M:%S')}")
 
         url_counter = 1
         for url in urls:
-            self._log(f"⏰ Requesting {url_counter}/{len(urls)} urls... ({url})")
+            logger.info(f"[{MODULE}:{self.category}] ⏰ Requesting {url_counter}/{len(urls)} urls... ({url})")
             self.driver.get(url)
 
             wait = WebDriverWait(self.driver, 5)
 
-            self._log("⏰ Waiting for title to render before continuing...")
+            logger.info(f"[{MODULE}:{self.category}] ⏰ Waiting for title to render before continuing...")
             wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="page-title-heading"]/span')))
 
-            self._log("🕷 Scanning products list...")
+            logger.info(f"[{MODULE}:{self.category}] 🕷 Scanning products list...")
             products_list = self.driver.find_elements_by_class_name('list-item')
-            self._log(f"📦 Ready to dump {len(products_list)} products data to csv items.")
+            logger.info(f"[{MODULE}:{self.category}] 📦 Ready to dump {len(products_list)} products data to csv items.")
             for product in products_list:
                 product_element = product.find_element_by_class_name('product-item-link')
                 product_name = product_element.text
@@ -104,7 +104,7 @@ class MaxiconsumoSpider(scrapy.Spider):
 
                 item = self.create_item(product_name, code, product_href, bundle_price, unit_price)
                 yield item
-            self._log(f"📦✅ Succesfully dumped {len(products_list)} products data to csv.")
+            logger.info(f"[{MODULE}:{self.category}] ✅ Succesfully dumped {len(products_list)} products data to csv.")
             url_counter += 1
 
         # Terminate Session
@@ -112,10 +112,10 @@ class MaxiconsumoSpider(scrapy.Spider):
         self.driver.stop_client()
         self.driver.close()
 
-        self._log("🎉 Scrapping finished succesfully.")
+        logger.info(f"[{MODULE}:{self.category}] 🎉 Scrapping finished succesfully.")
         end = timer()
         elapsed_time = timedelta(seconds=end - self.start_timer)
-        self._log(f"⏰ Total elapsed time: {elapsed_time}.")
+        logger.info(f"[{MODULE}:{self.category}] ⏰ Total elapsed time: {elapsed_time}.")
 
     def generate_paged_urls(self, base_url, category: str, max_pages_num: int):
         urls_list = []
@@ -158,7 +158,3 @@ class MaxiconsumoSpider(scrapy.Spider):
             code = splitted_name[-1]
 
         return code
-
-    def _log(self, message):
-        prefix = f"[{self.name}:{self.category}]"
-        logger.info(prefix + " " + message)
