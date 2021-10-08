@@ -1,6 +1,8 @@
 import shutil
 import os
 
+from datetime import timedelta
+
 from jobs.runner import run_jobs
 from jobs.fetcher import fetch_jobs
 
@@ -10,6 +12,8 @@ from mailer.send_mail import notify_clients, notify_errors
 
 from settings import EXECUTION_TIMESTAMP, MAIN_LOG_FILE, OUTPUT_DIR, LOGS_DIR, ATTACHMENTS_DIR
 
+from timeit import default_timer as timer
+
 from twisted.internet import reactor
 
 MODULE = __name__
@@ -17,8 +21,8 @@ MODULE = __name__
 
 def copy_files(source_dir, destination_dir):
     logfile(MAIN_LOG_FILE)
-    source_path = os.path.dirname(__file__) + source_dir
-    destination_path = os.path.dirname(__file__) + destination_dir
+    source_path = os.path.join(os.path.dirname(__file__), source_dir)
+    destination_path = os.path.join(os.path.dirname(__file__), destination_dir)
 
     logger.info(f"{MODULE} 📁 Preparing files to copy from: '{source_path}' into '{destination_path}'.")
     files = list(
@@ -57,8 +61,16 @@ def send_errors_report(error):
         logger.error(f"{MODULE} ❌ An unexpected error occurred while sending error reports via email. Error:\n{e}.")
 
 
+def log_total_time(start_timer):
+    logfile(MAIN_LOG_FILE)
+    elapsed_time = timedelta(seconds=timer() - start_timer)
+    logger.info(f"[{MODULE}] ⏰ Total elapsed time: {elapsed_time}.")
+
+
 def main():
     try:
+        # Initialize a timer
+        start_timer = timer()
         # Initializing log file
         logfile(MAIN_LOG_FILE)
         logger.info(f"[{MODULE}] 🏃‍♀️ Script starts and will:\n* fetch jobs\n* run jobs\n* copy files into attachments\n* send output via email\n")
@@ -67,7 +79,8 @@ def main():
         # Prepare on finish callbacks
         on_finish_callbacks = [
             lambda: copy_files(OUTPUT_DIR, ATTACHMENTS_DIR),
-            notify_clients
+            notify_clients,
+            lambda: log_total_time(start_timer)
         ]
         # Runs jobs
         run_jobs(jobs, on_finish_callbacks=on_finish_callbacks)
