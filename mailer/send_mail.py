@@ -72,7 +72,6 @@ def attach_files(mail):
     except Exception as e:
         logfile(MAIN_LOG_FILE)
         logger.error(f"[{MODULE}] ❌ An unexpected error occured while reading attachments: \n\n{e}", exc_info=True)
-        notify_errors()
 
 
 def notify_clients():

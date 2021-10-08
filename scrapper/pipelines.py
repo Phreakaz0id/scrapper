@@ -10,12 +10,12 @@ from itemadapter import ItemAdapter
 from scrapy.exporters import CsvItemExporter
 from scrapper import items
 
-timestamp = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
+from settings import EXECUTION_TIMESTAMP
 
 
 def build_file_name(spider_name, spider_category, file_extension):
     output_dir = OUTPUT_DIR + "/"
-    full_path = output_dir + timestamp + "_" + spider_name + "_" + spider_category + file_extension
+    full_path = output_dir + EXECUTION_TIMESTAMP + "_" + spider_name + "_" + spider_category + file_extension
     return full_path
 
 
