@@ -1,5 +1,5 @@
 logzero==1.7.0
-selenium==3.141.0
 Scrapy==2.5.0
-webdriver-manager==3.4.2
+selenium==3.141.0
 sendgrid==6.8.2
+webdriver-manager==3.4.2
