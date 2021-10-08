@@ -1,3 +1,4 @@
+import json
 import os
 
 from datetime import datetime
@@ -10,8 +11,8 @@ EXECUTION_TIMESTAMP = datetime.now().strftime("%m-%d-%Y-%H-%M-%S")
 MAIN_LOG_FILE = f"{LOGS_DIR}/{EXECUTION_TIMESTAMP}_main.log"
 
 FROM_EMAIL = os.environ["FROM_EMAIL"]
-ADMIN_EMAILS = os.environ["ADMIN_EMAILS"]
-CLIENT_EMAILS = os.environ["CLIENT_EMAILS"]
+ADMIN_EMAILS = json.loads(os.environ["ADMIN_EMAILS"])
+CLIENT_EMAILS = json.loads(os.environ["CLIENT_EMAILS"])
 
 ATTACHMENTS_DIR = "mailer/attachments"
 
