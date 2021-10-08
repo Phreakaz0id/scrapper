@@ -17,14 +17,18 @@ MODULE = __name__
 
 def copy_files(source_dir, destination_dir):
     logfile(MAIN_LOG_FILE)
-    source_path = os.path.dirname(__file__) + f"/{source_dir}"
-    destination_path = os.path.dirname(__file__) + f"/{destination_dir}"
+    source_path = os.path.dirname(__file__) + source_dir
+    destination_path = os.path.dirname(__file__) + destination_dir
 
     logger.info(f"{MODULE} 📁 Preparing files to copy from: '{source_path}' into '{destination_path}'.")
     files = list(
         filter(
             lambda f: EXECUTION_TIMESTAMP in f,
             os.listdir(source_path)))
+
+    if files == []:
+        logger.info(f"{MODULE} 📁 No files to copy as attachments, skipping.")
+        return
 
     logger.info(f"{MODULE} 📁 The following files will be copied {', '.join(files)}.")
 
