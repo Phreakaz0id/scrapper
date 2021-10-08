@@ -16,7 +16,7 @@ def get_post_client():
     return sg.client.mail.send.post
 
 
-def prepare_email(to_emails, subject, body):
+def prepare_email(from_email, to_emails, subject, content):
     return Mail(
         from_email=from_email,
         to_emails=to_emails,
@@ -39,6 +39,6 @@ def build_content(body, content_type):
     return Content(content_type, body)
 
 
-def send_mail(mail):
+def send_email(mail):
     post_client = get_post_client()
     return post_client(request_body=mail.get())
