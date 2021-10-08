@@ -104,7 +104,7 @@ class MaxiconsumoSpider(scrapy.Spider):
 
                 item = self.create_item(product_name, code, product_href, bundle_price, unit_price)
                 yield item
-            self._log(f"📦✅ Succesfully dumped {len(products_list)} products data to csv.")
+            self._log(f"✅ Succesfully dumped {len(products_list)} products data to csv.")
             url_counter += 1
 
         # Terminate Session
