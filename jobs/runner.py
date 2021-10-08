@@ -37,7 +37,7 @@ def build_logfile_name(job_type, category):
 
 
 @defer.inlineCallbacks
-def run_jobs(jobs):
+def run_jobs(jobs, on_finish=None):
     logger.info(f"[{MODULE}] 🛠 Preparing jobs runner with settings [scrapy_settings: {scrapy_settings.__dict__}].")
     runner = CrawlerRunner(settings=scrapy_settings)
     for job in jobs:
@@ -60,3 +60,4 @@ def run_jobs(jobs):
 
     logfile(MAIN_LOG_FILE)
     logger.info(f"[{MODULE}]" + " 🏁 Finished all crawling jobs.\n")
+    on_finish()
