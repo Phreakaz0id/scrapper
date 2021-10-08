@@ -260,4 +260,4 @@ class YaguarSpider(scrapy.Spider):
         elif category == "limpieza":
             return CLEANING_DATA
         else:
-            raise Exception(f"[{MODULE}:{self.category}] Unkown Category")
+            raise Exception(f"[{MODULE}:{self.category}] Unkown Category: ({category}).")
