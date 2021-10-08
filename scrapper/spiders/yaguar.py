@@ -17,6 +17,8 @@ from selenium.webdriver.common.by import By
 
 from timeit import default_timer as timer
 
+MODULE = __name__
+
 # Categoria de Limpieza
 CLEANING_DATA = {
     'CAT_LINK': 'refDepto3',
@@ -108,14 +110,14 @@ class YaguarSpider(scrapy.Spider):
         self.driver = set_driver()
 
     def login(self):
-        self._log("👋 Requesting log in url...")
+        logger.info(f"[{MODULE}:{self.category}] 👋 Requesting log in url...")
         self.driver.get('https://shop.yaguar.com.ar/frontendSP/asp/home.asp#/')
 
         USERNAME_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[1]/input'
         PASSWORD_INPUT = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[1]'
         LOGIN_BUTTON = '/html/body/div/div[3]/div[1]/div[2]/form/fieldset/p[2]/input[2]'
 
-        self._log("👋 Ready to log in...")
+        logger.info(f"[{MODULE}:{self.category}] 👋 Ready to log in...")
         # Wait for page to load
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.XPATH, USERNAME_INPUT))
@@ -130,10 +132,10 @@ class YaguarSpider(scrapy.Spider):
         login_button = self.driver.find_element(By.XPATH, LOGIN_BUTTON)
         login_button.click()
 
-        self._log("✅ Succesfully logged in!")
+        logger.info(f"[{MODULE}:{self.category}] ✅ Succesfully logged in!")
 
     def parse(self, response):
-        self._log(f"⏰ Scraping started at {time.strftime('%H:%M:%S')}")
+        logger.info(f"[{MODULE}:{self.category}] ⏰ Scraping started at {time.strftime('%H:%M:%S')}")
 
         category_link_id = self.categories['CAT_LINK']
         cat_link = self.driver.find_element(By.ID, category_link_id)
@@ -144,7 +146,7 @@ class YaguarSpider(scrapy.Spider):
         ref_depto = category_link_id.split('refDepto')[1]
         LINK_PATH_TEMPLATE = '//a[@href="javascript:CargarIframeContenido(\'iframe_ListadoDeProductos.asp?IdDepto={ref_depto}&IdCategoria={category_id}\');"]'.replace('{ref_depto}', ref_depto)
         for category_name, category_id in CATEGORIES:
-            self._log(f"🕷 Start parsing the {category_name} category.")
+            logger.info(f"[{MODULE}:{self.category}] 🕷 Start parsing the {category_name} category.")
             category_link = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, LINK_PATH_TEMPLATE.replace('{category_id}', category_id))))
             category_link.click()
 
@@ -153,25 +155,25 @@ class YaguarSpider(scrapy.Spider):
             # Search the iframe
             iframe = WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.XPATH, "//*[@id=\"ifrContenido\"]")))
 
-            self._log("🧪 Switching from default context (main page) to iframe context (product list) to scan products...")
+            logger.info(f"[{MODULE}:{self.category}] 🧪 Switching from default context (main page) to iframe context (product list) to scan products...")
             self.driver.switch_to.frame(iframe)
-            self._log("🧪 Inside iframe context (product list), ready to scan products.")
+            logger.info(f"[{MODULE}:{self.category}] 🧪 Inside iframe context (product list), ready to scan products.")
 
             pages_text = None
             try:
-                self._log("🕷 Searching for pages...")
+                logger.info(f"[{MODULE}:{self.category}] 🕷 Searching for pages...")
                 pages_text = self.driver.find_element_by_class_name('tcceleste').text
             except NoSuchElementException:
-                self._log(f"🕷 No more pages for {category_name} category. Switching category.")
+                logger.info(f"[{MODULE}:{self.category}] 🕷 No more pages for {category_name} category. Switching category.")
 
             if pages_text is None:
-                self._log(f"🕷 No product pages in '{category_name}'. Skipping category.")
-                self._log("🧪 Switching from iframe context (product list) to default context (main page) to browse categories...")
+                logger.info(f"[{MODULE}:{self.category}] 🕷 No product pages in '{category_name}'. Skipping category.")
+                logger.info(f"[{MODULE}:{self.category}] 🧪 Switching from iframe context (product list) to default context (main page) to browse categories...")
                 self.driver.switch_to.default_content()
-                self._log("🧪 Back to default context (main page).")
+                logger.info(f"[{MODULE}:{self.category}] 🧪 Back to default context (main page).")
                 continue
 
-            self._log(f"🕷 Found {pages_text} page/s. Searching products...")
+            logger.info(f"[{MODULE}:{self.category}] 🕷 Found {pages_text} page/s. Searching products...")
 
             max_pages = self.get_page_from_pages_text(pages_text)
 
@@ -179,40 +181,40 @@ class YaguarSpider(scrapy.Spider):
             products = self.search_products_in_page(products)
             max_pages = max_pages - 1
 
-            self._log(f"🕷 {max_pages} pages remainig for {category_name} category.")
+            logger.info(f"[{MODULE}:{self.category}] 🕷 {max_pages} pages remainig for {category_name} category.")
 
             while max_pages != 0:
                 try:
                     next_page = self.driver.find_element_by_xpath("//*[contains(text(),'siguiente')]")
                     next_page.click()
                 except NoSuchElementException:
-                    self._log(f"🕷 No more pages for {category_name} category. Switching category.")
+                    logger.info(f"[{MODULE}:{self.category}] 🕷 No more pages for {category_name} category. Switching category.")
 
                 products = self.search_products_in_page(products)
                 max_pages = max_pages - 1
 
-                self._log(f"🕷 {max_pages} pages remainig for {category_name} category.")
+                logger.info(f"[{MODULE}:{self.category}] 🕷 {max_pages} pages remainig for {category_name} category.")
 
             products = list(set(products))
 
-            self._log(f"📦 Ready to dump {len(products)} products data to csv items.")
+            logger.info(f"[{MODULE}:{self.category}] 📦 Ready to dump {len(products)} products data to csv items.")
             for product in products:
                 item = self.create_item(category_name, product)
                 yield item
-            self._log(f"📦✅ Succesfully dumped {len(products)} products data to csv.")
+            logger.info(f"[{MODULE}:{self.category}] ✅ Succesfully dumped {len(products)} products data to csv.")
 
-            self._log("🧪 Switching from iframe context (product list) to default context (main page) to browse categories...")
+            logger.info(f"[{MODULE}:{self.category}] 🧪 Switching from iframe context (product list) to default context (main page) to browse categories...")
             self.driver.switch_to.default_content()
-            self._log("🧪 Back to default context (main page).")
+            logger.info(f"[{MODULE}:{self.category}] 🧪 Back to default context (main page).")
 
         time.sleep(3)
         self.driver.stop_client()
         self.driver.close()
 
-        self._log("🎉 Scrapping finished succesfully.")
+        logger.info(f"[{MODULE}:{self.category}] 🎉 Scrapping finished succesfully.")
         end = timer()
         elapsed_time = timedelta(seconds=end - self.start_timer)
-        self._log(f"⏰ Total elapsed time: {elapsed_time}.")
+        logger.info(f"[{MODULE}:{self.category}] ⏰ Total elapsed time: {elapsed_time}.")
 
     def create_item(self, category_name, product):
         code = product[0]
@@ -255,9 +257,7 @@ class YaguarSpider(scrapy.Spider):
     def get_subcategories_by_category(self, category):
         if category == "perfumeria":
             return PERFUMERY_DATA
-        else:
+        elif category == "limpieza":
             return CLEANING_DATA
-
-    def _log(self, message):
-        prefix = f"[{self.name}:{self.category}]"
-        logger.info(prefix + " " + message)
+        else:
+            raise Exception(f"[{MODULE}:{self.category}] Unkown Category")
