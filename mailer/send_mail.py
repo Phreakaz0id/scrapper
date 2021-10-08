@@ -12,6 +12,7 @@ from settings import (
     ADMIN_EMAILS,
     ATTACHMENTS_DIR,
     CLIENT_EMAILS,
+    EXECUTION_TIMESTAMP,
     FAILURE_BODY,
     FAILURE_SUBJECT,
     MAIN_LOG_FILE,
@@ -49,14 +50,13 @@ def attach_files(mail):
     try:
         files = list(
             filter(
-                lambda f: f != ".gitkeep",
+                lambda f: EXECUTION_TIMESTAMP in f,
                 os.listdir(os.path.dirname(__file__) + f"/../{ATTACHMENTS_DIR}")))
 
         if files == []:
             raise Exception("❌ The script has been scheduled but no attachments were found.")
 
         logger.info(f"[{MODULE}] Preparing the following attachments: {', '.join(files)}.")
-        # exit()
 
         for file_name in files:
             file_location = os.path.dirname(__file__) + f"/../{ATTACHMENTS_DIR}/{file_name}"
